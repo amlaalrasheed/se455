@@ -1,0 +1,91 @@
+{
+  "devices": [
+    {"id": 1, "name": "Living Room Light", "type": "light", "room": "Living Room", "status": "on", "value": 80, "unit": "%", "mqtt_topic": "home/living_room/light/1"},
+    {"id": 2, "name": "Bedroom AC", "type": "ac", "room": "Bedroom", "status": "on", "value": 22, "unit": "°C", "mqtt_topic": "home/bedroom/ac/2"},
+    {"id": 3, "name": "Kitchen Light", "type": "light", "room": "Kitchen", "status": "off", "value": 0, "unit": "%", "mqtt_topic": "home/kitchen/light/3"},
+    {"id": 4, "name": "Front Door", "type": "door", "room": "Entrance", "status": "locked", "value": 0, "unit": "", "mqtt_topic": "home/entrance/door/4"},
+    {"id": 5, "name": "Living Room Fan", "type": "fan", "room": "Living Room", "status": "on", "value": 3, "unit": "spd", "mqtt_topic": "home/living_room/fan/5"},
+    {"id": 6, "name": "Security Camera Front", "type": "camera", "room": "Garage", "status": "on", "value": 0, "unit": "", "mqtt_topic": "home/garage/camera/6"},
+    {"id": 7, "name": "Bedroom Light", "type": "light", "room": "Bedroom", "status": "off", "value": 0, "unit": "%", "mqtt_topic": "home/bedroom/light/7"},
+    {"id": 8, "name": "Office AC", "type": "ac", "room": "Office", "status": "off", "value": 24, "unit": "°C", "mqtt_topic": "home/office/ac/8"},
+    {"id": 9, "name": "Kitchen Sensor", "type": "sensor", "room": "Kitchen", "status": "on", "value": 26.5, "unit": "°C", "mqtt_topic": "home/kitchen/sensor/9"},
+    {"id": 10, "name": "Office Light", "type": "light", "room": "Office", "status": "on", "value": 60, "unit": "%", "mqtt_topic": "home/office/light/10"},
+    {"id": 11, "name": "Bedroom Speaker", "type": "speaker", "room": "Bedroom", "status": "off", "value": 40, "unit": "%", "mqtt_topic": "home/bedroom/speaker/11"},
+    {"id": 12, "name": "Living Room TV", "type": "tv", "room": "Living Room", "status": "off", "value": 0, "unit": "", "mqtt_topic": "home/living_room/tv/12"},
+    {"id": 13, "name": "Bathroom Light", "type": "light", "room": "Bathroom", "status": "off", "value": 0, "unit": "%", "mqtt_topic": "home/bathroom/light/13"},
+    {"id": 14, "name": "Garage Door", "type": "door", "room": "Garage", "status": "unlocked", "value": 0, "unit": "", "mqtt_topic": "home/garage/door/14"},
+    {"id": 15, "name": "Security Camera Back", "type": "camera", "room": "Garage", "status": "on", "value": 0, "unit": "", "mqtt_topic": "home/garage/camera/15"}
+  ],
+  "rooms": [
+    {"id": 1, "name": "Living Room", "icon": "sofa", "floor": 1},
+    {"id": 2, "name": "Bedroom", "icon": "bed", "floor": 1},
+    {"id": 3, "name": "Kitchen", "icon": "chef-hat", "floor": 1},
+    {"id": 4, "name": "Office", "icon": "briefcase", "floor": 2},
+    {"id": 5, "name": "Bathroom", "icon": "droplets", "floor": 1},
+    {"id": 6, "name": "Garage", "icon": "car", "floor": 0}
+  ],
+  "automation_rules": [
+    {
+      "id": 1,
+      "name": "Night Mode",
+      "description": "Turn off all lights and lock doors at 11 PM",
+      "trigger_type": "schedule",
+      "trigger_config": {"time": "23:00"},
+      "actions": [
+        {"device_id": 1, "action": "turn_off"},
+        {"device_id": 3, "action": "turn_off"},
+        {"device_id": 4, "action": "lock"},
+        {"device_id": 7, "action": "turn_off"}
+      ],
+      "is_active": true
+    },
+    {
+      "id": 2,
+      "name": "Good Morning",
+      "description": "Turn on lights and unlock front door at 7 AM",
+      "trigger_type": "schedule",
+      "trigger_config": {"time": "07:00"},
+      "actions": [
+        {"device_id": 1, "action": "turn_on"},
+        {"device_id": 4, "action": "unlock"},
+        {"device_id": 10, "action": "turn_on"}
+      ],
+      "is_active": true
+    },
+    {
+      "id": 3,
+      "name": "High Temperature Alert",
+      "description": "Turn on AC if kitchen sensor exceeds 30°C",
+      "trigger_type": "sensor",
+      "trigger_config": {"device_id": 9, "threshold": 30, "operator": "gt"},
+      "actions": [
+        {"device_id": 2, "action": "turn_on"},
+        {"device_id": 8, "action": "turn_on"}
+      ],
+      "is_active": true
+    }
+  ],
+  "scenes": {
+    "night mode": [
+      {"device_type": "light", "action": "turn_off"},
+      {"device_type": "door", "action": "lock"},
+      {"device_type": "ac", "action": "set", "value": 20}
+    ],
+    "good morning": [
+      {"device_type": "light", "action": "turn_on"},
+      {"device_type": "door", "action": "unlock"},
+      {"device_type": "ac", "action": "set", "value": 23}
+    ],
+    "movie mode": [
+      {"device_type": "light", "action": "dim", "value": 20},
+      {"device_type": "tv", "action": "turn_on"},
+      {"device_type": "fan", "action": "turn_on"}
+    ],
+    "away mode": [
+      {"device_type": "light", "action": "turn_off"},
+      {"device_type": "door", "action": "lock"},
+      {"device_type": "fan", "action": "turn_off"},
+      {"device_type": "ac", "action": "turn_off"}
+    ]
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "version": "1.0.0",
+  "primary_model": "gpt-3.5-turbo",
+  "fallback": "rule-based",
+  "temperature": 0.1,
+  "intent_classes": ["device_control","query_status","scene_activate","automation_create","unknown"],
+  "device_types": ["light","fan","ac","door","camera","sensor","tv","speaker"],
+  "evaluation": {
+    "intent_accuracy_llm": 0.92,
+    "intent_accuracy_rules": 0.78,
+    "entity_recall": 0.88,
+    "avg_latency_ms": 280,
+    "success_rate": 0.95
+  }
+}
