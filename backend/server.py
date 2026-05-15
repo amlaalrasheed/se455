@@ -1,13 +1,3 @@
-"""
-SmartHomeAI — Simplified Backend
-SE 455: Generative AI | Alfaisal University | Spring 2026
-Team: Layan Alshowaier, Almaha Alrasheed, Lateen Alhurasen, Moudi Alsadoon, Saba Siddiqui
-
-Single-file Flask server — no database, no JWT, no ORM.
-Device state stored in memory (resets on restart) and data/devices.json.
-LLM: GPT-3.5 via OpenAI API (falls back to rule-based if no key).
-"""
-
 import os, re, json, time, logging
 from datetime import datetime
 from flask import Flask, jsonify, request
@@ -16,14 +6,14 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 load_dotenv()
 
-# ── Optional OpenAI ────────────────────────────────────────────
+# OpenAI
 try:
     import openai
     OPENAI_AVAILABLE = True
 except ImportError:
     OPENAI_AVAILABLE = False
 
-# ── App Setup ─────────────────────────────────────────────────
+# Setting the App
 app = Flask(__name__)
 CORS(app)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
@@ -32,7 +22,7 @@ log = logging.getLogger(__name__)
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 OPENAI_MODEL   = "gpt-3.5-turbo"
 
-# ── Load Device Data ──────────────────────────────────────────
+# Loading Device Data
 DATA_FILE = os.path.join(os.path.dirname(__file__), "..", "data", "devices.json")
 
 def load_devices():
@@ -74,10 +64,10 @@ data            = load_devices()
 DEVICES         = {d["id"]: d.copy() for d in data["devices"]}
 ROOMS           = data["rooms"]
 AUTOMATION_RULES= data["automation_rules"]
-COMMAND_LOG     = []   # in-memory command history
-MQTT_LOG        = []   # in-memory MQTT log
+COMMAND_LOG     = []   # command history in memory
+MQTT_LOG        = []   # MQTT log in memory
 
-# ── MQTT Simulation ───────────────────────────────────────────
+# Simulating MQTT
 def mqtt_publish(device):
     topic   = f"home/{device['room'].lower().replace(' ','_')}/{device['type']}/{device['id']}"
     payload = {"device_id": device["id"], "status": device["status"],
@@ -90,11 +80,23 @@ def mqtt_publish(device):
     log.info(f"[MQTT] PUBLISH {topic} → {json.dumps(payload)}")
     return entry
 
-# ── NLP — GPT-3.5 ─────────────────────────────────────────────
+# NLP — GPT-3.5
 SYSTEM_PROMPT = """You are an IoT smart home command parser.
 Parse the user command into a structured JSON object.
 Respond ONLY with valid JSON, no explanation.
 
+Normalization Rules:
+- "change" / "adjust" / "increase" / "decrease" should be treated like "set"
+- "switch on" is treated like "turn_on"
+- "switch off" is treated like "turn_off"
+- The user may say "open" for a door. Interpret it as action "unlock".
+- The user may say "close" for a door. Interpret it as action "lock".
+- Valid actions are ONLY:
+  "turn_on","turn_off","set","lock","unlock","dim","brighten"
+- If the command says "garage door", device_type is "door" and location is "garage"
+- Location must only be one of:
+  living room, bedroom, kitchen, bathroom, garage, office, entrance
+- Do not put device names inside location
 JSON schema:
 {
   "intent": "device_control" | "query_status" | "scene_activate" | "unknown",
@@ -127,7 +129,7 @@ def parse_with_llm(text):
         log.warning(f"LLM error: {e}")
         return None, 0
 
-# ── NLP — Rule-Based Fallback ─────────────────────────────────
+# NLP — Rule-Based Fallback
 DEVICE_MAP = {
     "light":  ["light","lights","lamp","bulb","brightness"],
     "fan":    ["fan"],
@@ -140,13 +142,14 @@ DEVICE_MAP = {
 }
 ROOMS_KW = ["living room","bedroom","kitchen","bathroom","garage","office","entrance"]
 ACTION_RE = [
-    (r"\b(turn on|switch on|enable|activate)\b",  "turn_on"),
-    (r"\b(turn off|switch off|disable|deactivate)\b","turn_off"),
-    (r"\b(lock|secure)\b",                         "lock"),
-    (r"\b(unlock|open)\b",                         "unlock"),
-    (r"\b(dim|lower)\b",                           "dim"),
-    (r"\b(brighten|brighter)\b",                   "brighten"),
-    (r"\b(set|adjust)\b.{0,20}\bto\b",             "set"),
+    (r"\b(turn on|switch on|enable|activate)\b", "turn_on"),
+    (r"\b(turn off|switch off|disable|deactivate)\b", "turn_off"),
+    (r"\b(lock|secure|close)\b", "lock"),
+    (r"\b(unlock|open)\b", "unlock"),
+    (r"\b(dim|lower)\b", "dim"),
+    (r"\b(brighten|brighter)\b", "brighten"),
+    (r"\b(set|adjust|change|increase|decrease)\b.{0,20}\bto\b", "set"),
+
 ]
 SCENE_KW = {
     "night mode":   ["night mode","going to sleep","bedtime","before i sleep"],
@@ -209,7 +212,7 @@ def parse_command(text):
     parsed["mode"] = "rule-based"
     return parsed, latency
 
-# ── Device Execution ──────────────────────────────────────────
+# Executing Device
 SCENES = {
     "night mode":   [("light","turn_off"),("door","lock"),  ("ac","set",20)],
     "good morning": [("light","turn_on"), ("door","unlock"),("ac","set",23)],
@@ -224,7 +227,8 @@ def execute(parsed):
 
     if intent == "device_control":
         dtype    = parsed.get("device_type")
-        location = (parsed.get("location") or "").lower()
+        location = (parsed.get("location") or "").lower().strip()
+        location = location.replace("the ", "")
         action   = parsed.get("action")
         value    = parsed.get("value")
         multiple = parsed.get("multiple_devices", False)
@@ -282,24 +286,22 @@ def generate_response(parsed, affected):
     sched  = parsed.get("schedule")
 
     if intent == "scene_activate":
-        return f"✅ {(parsed.get('scene') or 'Scene').title()} activated! {len(affected)} devices updated."
+        return f"{(parsed.get('scene') or 'Scene').title()} activated! {len(affected)} devices updated."
     if intent == "query_status":
         if affected:
-            return "📊 " + " | ".join(affected[:4])
-        return "📊 No matching devices found."
+            return " | ".join(affected[:4])
+        return "No matching devices found."
     if not affected:
-        return f"❌ No matching {dtype} found{loc}."
+        return f"No matching {dtype} found{loc}."
     verb = {"turn_on":"turned on","turn_off":"turned off","lock":"locked",
             "unlock":"unlocked","set":f"set to {parsed.get('value')}{parsed.get('unit') or ''}",
             "dim":"dimmed","brighten":"brightened"}.get(action, "updated")
     if sched:
-        return f"⏰ Scheduled! I'll {action.replace('_',' ')} the {dtype}{loc} {sched}."
+        return f"Scheduled! I'll {action.replace('_',' ')} the {dtype}{loc} {sched}."
     count = f"All {len(affected)} {dtype}s" if parsed.get("multiple_devices") else affected[0]
-    return f"✅ {count}{loc} {verb}."
+    return f"{count}{loc} {verb}."
 
-# ══════════════════════════════════════════════
 # API ROUTES
-# ══════════════════════════════════════════════
 
 @app.route("/api/health")
 def health():
@@ -338,11 +340,11 @@ def nlp_command():
     if not text:
         return jsonify({"error":"No command text"}), 400
 
-    t0                = time.time()
+    t0 = time.time()
     parsed, llm_latency = parse_command(text)
-    affected          = execute(parsed)
-    response_text     = generate_response(parsed, affected)
-    total_latency     = max(llm_latency, int((time.time() - t0) * 1000))
+    affected = execute(parsed)
+    response_text = generate_response(parsed, affected)
+    total_latency = max(llm_latency, int((time.time() - t0) * 1000))
 
     entry = {"timestamp": datetime.now().isoformat(), "text": text,
              "parsed_intent": parsed, "response": response_text,
@@ -445,17 +447,12 @@ def nlp_metrics():
 def mqtt_log():
     return jsonify(list(reversed(MQTT_LOG[-20:])))
 
-# ── Run ───────────────────────────────────────────────────────
+# Run
 if __name__ == "__main__":
     mode = "GPT-3.5" if OPENAI_API_KEY else "rule-based fallback"
-    print(f"""
-╔══════════════════════════════════════════╗
-║         SmartHomeAI Backend v2.0         ║
-║   SE 455 · Alfaisal University · 2026    ║
-╠══════════════════════════════════════════╣
-║  NLP Mode : {mode:<30}║
-║  Devices  : {len(DEVICES):<30}║
-║  URL      : http://localhost:5000        ║
-╚══════════════════════════════════════════╝
+    print(f"""     
+   NLP Mode : {mode:<30}
+   Devices  : {len(DEVICES):<30}
+   URL      : http://localhost:5000        
     """)
     app.run(host="0.0.0.0", port=5000, debug=True)
