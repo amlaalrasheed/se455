@@ -31,7 +31,7 @@ def test_health(client):
 def test_get_devices(client):
     # requesting the smart home devices list from the backend
     r = client.get("/api/devices")
-    # the rrequest should be successfull
+    # the request should be successful
     assert r.status_code == 200
     # the project should result at least the default set of devices
     assert len(r.get_json()) >= 8
