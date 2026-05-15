@@ -1,8 +1,6 @@
-# SmartHomeAI 🏠🤖
-### Smart Home Automation with LLM-Powered Natural Language Interfaces
-**SE 455: Generative AI | Alfaisal University | Spring 2026**
-**Team:** Layan Alshowaier · Almaha Alrasheed · Lateen Alhurasen · Moudi Alsadoon · Saba Siddiqui
-**Instructor:** Dr. Nidal Nasser
+# SmartHomeAI: A Smart Home Automation System with LLM-Powered Natural Language Interfaces
+**SE 455: Generative AI | Dr. Nidal Nasser
+**Team:** Layan Alshowaier - Almaha Alrasheed - Lateen Alhurasen - Moudi Alsadoon - Saba Siddiqui
 
 ## Quick Start
 
@@ -39,7 +37,7 @@ OPENAI_API_KEY=sk-your-key-here
 | LLM | Same | Same |
 | MQTT | Same | Same |
 
-## Project Structure (SE 455 Required)
+## Project Structure
 ```
 README.md
 requirements.txt (backend)
