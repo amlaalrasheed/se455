@@ -3,10 +3,10 @@ import axios from "axios";
 
 const API = "http://localhost:5000/api"
 
-// ── Icons ──────────────────────────────────────────────────────
+// Dashboard icons
 const ICONS = { light:"💡", fan:"🌀", ac:"❄️", door:"🚪", camera:"📷", sensor:"🌡️", tv:"📺", speaker:"🔊" }
 
-// ── Colours ───────────────────────────────────────────────────
+//colors for dashbaord and dash components 
 const S = {
   sidebar:  { background:"#fff", borderRight:"0.5px solid #e2e8f0", display:"flex", flexDirection:"column", width:210, minHeight:"100vh", position:"sticky", top:0, height:"100vh" },
   main:     { background:"#f8fafc", flex:1, overflowY:"auto", minHeight:"100vh" },
@@ -23,7 +23,7 @@ const S = {
   btn:      (active) => ({ padding:"6px 14px", borderRadius:20, fontSize:12, fontWeight:500, cursor:"pointer", border: active?"none":"0.5px solid #e2e8f0", background: active?"#0ea5e9":"#fff", color: active?"#fff":"#64748b" }),
 }
 
-// ── Device Card ───────────────────────────────────────────────
+//cards displaying our devices 
 function DeviceCard({ d, onToggle, compact }) {
   const on = d.status === "on" || d.status === "unlocked"
   return (
@@ -45,7 +45,7 @@ function DeviceCard({ d, onToggle, compact }) {
   )
 }
 
-// ── MQTT Log Panel ────────────────────────────────────────────
+//log panel for MQTT
 function MqttPanel({ logs }) {
   const ref = useRef()
   useEffect(() => { if (ref.current) ref.current.scrollTop = ref.current.scrollHeight }, [logs])
@@ -67,7 +67,7 @@ function MqttPanel({ logs }) {
   )
 }
 
-// ── Main App ──────────────────────────────────────────────────
+//Main page dashboard
 export default function App() {
   const [tab,      setTab]      = useState("dashboard")
   const [devices,  setDevices]  = useState([])
@@ -84,7 +84,7 @@ export default function App() {
   const [daily,    setDaily]    = useState([])
   const chatRef = useRef()
 
-  // ── Fetch Data ─────────────────────────────────────────────
+  //fetching data
   const fetchAll = async () => {
     try {
       const [devR, roomR, ruleR, sumR, mqttR, metR, dayR] = await Promise.all([
@@ -104,7 +104,7 @@ export default function App() {
       setNlpMetrics(metR.data)
       setDaily(dayR.data)
     } catch {
-      // backend not running — use demo data
+      //if the backend is not running — use demo data
       setDevices(DEMO_DEVICES)
     }
   }
@@ -112,7 +112,7 @@ export default function App() {
   useEffect(() => { fetchAll() }, [])
   useEffect(() => { if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight }, [msgs])
 
-  // ── Toggle Device ──────────────────────────────────────────
+  //toggle for the devices
   const toggleDevice = async (id, isOn) => {
     const newStatus = isOn
       ? (devices.find(d => d.id === id)?.type === "door" ? "locked" : "off")
@@ -126,7 +126,7 @@ export default function App() {
     }, 300)
   }
 
-  // ── Send NLP Command ───────────────────────────────────────
+  //send llm command (chat)
   const sendCommand = async (text) => {
     const cmd = (text || input).trim()
     if (!cmd) return
@@ -137,7 +137,7 @@ export default function App() {
       const { data } = await axios.post(`${API}/nlp/command`, { text: cmd })
       setMsgs(m => [...m, { role:"ai", text: data.ai_response, latency: data.latency_ms }])
       setIntent(data.parsed_intent)
-      // Refresh devices + MQTT log
+      //Refresh devices + MQTT log
       const [devR, mqttR, sumR] = await Promise.all([
         axios.get(`${API}/devices`),
         axios.get(`${API}/mqtt/log`),
@@ -147,7 +147,7 @@ export default function App() {
       setMqttLogs(mqttR.data)
       setSummary(sumR.data)
     } catch {
-      // Offline rule-based demo
+      //Offline rule-based demo
       const reply = localParse(cmd)
       setMsgs(m => [...m, { role:"ai", text: reply }])
     } finally {
@@ -171,7 +171,7 @@ export default function App() {
   return (
     <div style={{ display:"flex", fontFamily:"system-ui,-apple-system,sans-serif" }}>
 
-      {/* ── Sidebar ─────────────────────────────────────────── */}
+      {/*Sidebar*/}
       <aside style={S.sidebar}>
         <div style={{ padding:"16px", borderBottom:"0.5px solid #e2e8f0", display:"flex", alignItems:"center", gap:8 }}>
           <span style={{ fontSize:24 }}>🏠</span>
@@ -202,10 +202,10 @@ export default function App() {
         </div>
       </aside>
 
-      {/* ── Main ────────────────────────────────────────────── */}
+      {/*Main*/}
       <main style={S.main}>
 
-        {/* ════ DASHBOARD ═══════════════════════════════════ */}
+        {/*Dashboard page*/}
         {tab === "dashboard" && (
           <div style={S.page}>
             <h1 style={S.h1}>Dashboard</h1>
@@ -258,7 +258,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ════ DEVICES ══════════════════════════════════════ */}
+        {/*our devices page*/}
         {tab === "devices" && (
           <div style={S.page}>
             <h1 style={S.h1}>Devices</h1>
@@ -275,7 +275,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ════ AI CONTROL ═══════════════════════════════════ */}
+        {/*ai control (chat) page*/}
         {tab === "chat" && (
           <div style={S.page}>
             <h1 style={S.h1}>AI Control</h1>
@@ -360,7 +360,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ════ AUTOMATION ═══════════════════════════════════ */}
+        {/*automation page*/}
         {tab === "automation" && (
           <div style={S.page}>
             <h1 style={S.h1}>Automation Rules</h1>
@@ -407,7 +407,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ════ ANALYTICS ════════════════════════════════════ */}
+        {/*analytics page*/}
         {tab === "analytics" && (
           <div style={S.page}>
             <h1 style={S.h1}>Analytics</h1>
@@ -512,7 +512,7 @@ export default function App() {
   )
 }
 
-// ── Offline fallback parser (no backend) ─────────────────────
+// Offline fallback (no backend) 
 function localParse(text) {
   const t = text.toLowerCase()
   if (t.includes("night mode") || t.includes("going to sleep")) return "🌙 Night mode activated! Lights off, doors locked."
@@ -528,7 +528,7 @@ function localParse(text) {
   return "🤔 I couldn't understand that. Try: 'Turn on the living room lights' or 'Activate night mode'"
 }
 
-// ── Demo device data (if backend offline) ───────────────────
+// Demo device data (if backend offline)
 const DEMO_DEVICES = [
   {id:1,name:"Living Room Light",type:"light",room:"Living Room",status:"on",   value:80,  unit:"%"},
   {id:2,name:"Bedroom AC",       type:"ac",   room:"Bedroom",    status:"on",   value:22,  unit:"°C"},
