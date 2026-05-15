@@ -3,16 +3,20 @@
 ## Run Locally
 ```bash
 # Backend
-cd backend && pip install -r requirements.txt && python server.py
+cd backend
+pip install -r requirements.txt
+python server.py
 
 # Frontend (new terminal)
-cd frontend && npm install && npm run dev
+cd frontend
+npm install
+npm run dev
 ```
 Open: http://localhost:5173
 
 ## Add GPT-3.5
 ```bash
-echo "OPENAI_API_KEY=sk-your-key" > backend/.env
+echo "OPENAI_API_KEY=sk-the-key" > backend/.env
 ```
 Restart backend. NLP mode switches from "rule-based" to "gpt-3.5" automatically.
 
