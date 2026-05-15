@@ -1,5 +1,5 @@
 # SmartHomeAI: A Smart Home Automation System with LLM-Powered Natural Language Interfaces
-**SE 455: Generative AI | Dr. Nidal Nasser
+**SE 455: Generative AI | Dr. Nidal Nasser**
 ---
 **Team:** Layan Alshowaier - Almaha Alrasheed - Lateen Alhurasen - Moudi Alsadoon - Saba Siddiqui
 
