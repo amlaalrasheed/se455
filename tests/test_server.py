@@ -1,9 +1,3 @@
-"""
-SmartHomeAI's testing file for backend
-It makes sure that the api routes, nlp parser, automation rules, analytics, and mqtt logs are working properly.
-To run it: python -m pytest tests/test_server.py -v
-"""
-# importing the system and path modules so that the test file can find the backend folder
 import sys, os
 
 # this adds the backend folder to the python path and allows the test file to import server.py even though its in another folder
