@@ -6,14 +6,14 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 load_dotenv()
 
-# OpenAI
+# Importing OpenAI
 try:
     import openai
     OPENAI_AVAILABLE = True
 except ImportError:
     OPENAI_AVAILABLE = False
 
-# Setting the App
+# This creates the flask backend app
 app = Flask(__name__)
 CORS(app)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
@@ -22,7 +22,7 @@ log = logging.getLogger(__name__)
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 OPENAI_MODEL   = "gpt-3.5-turbo"
 
-# Loading Device Data
+# Loading Device Data from devices.json
 DATA_FILE = os.path.join(os.path.dirname(__file__), "..", "data", "devices.json")
 
 def load_devices():
@@ -67,7 +67,7 @@ AUTOMATION_RULES= data["automation_rules"]
 COMMAND_LOG     = []   # command history in memory
 MQTT_LOG        = []   # MQTT log in memory
 
-# Simulating MQTT
+# This simulates MQTT communication
 def mqtt_publish(device):
     topic   = f"home/{device['room'].lower().replace(' ','_')}/{device['type']}/{device['id']}"
     payload = {"device_id": device["id"], "status": device["status"],
@@ -80,7 +80,7 @@ def mqtt_publish(device):
     log.info(f"[MQTT] PUBLISH {topic} → {json.dumps(payload)}")
     return entry
 
-# NLP — GPT-3.5
+# This is the system prompt GPT will use
 SYSTEM_PROMPT = """You are an IoT smart home command parser.
 Parse the user command into a structured JSON object.
 Respond ONLY with valid JSON, no explanation.
@@ -110,7 +110,7 @@ JSON schema:
   "multiple_devices": boolean,
   "confidence": 0.0 to 1.0
 }"""
-
+#This sends the user commands to GPT 3.5
 def parse_with_llm(text):
     if not OPENAI_API_KEY or not OPENAI_AVAILABLE:
         return None, 0
@@ -129,7 +129,7 @@ def parse_with_llm(text):
         log.warning(f"LLM error: {e}")
         return None, 0
 
-# NLP — Rule-Based Fallback
+# NLP — Rule-Based Fallback which is used when GPT fails
 DEVICE_MAP = {
     "light":  ["light","lights","lamp","bulb","brightness"],
     "fan":    ["fan"],
@@ -158,7 +158,7 @@ SCENE_KW = {
     "away mode":    ["away mode","leaving","i am leaving","going out"],
     "security mode":["security mode","secure the house"],
 }
-
+# This is an NLP parser which uses keyword matching to detect actions, devices,.....
 def parse_rule_based(text):
     t  = text.lower()
     r  = {"intent":"unknown","device_type":None,"location":None,"action":None,
@@ -202,7 +202,7 @@ def parse_rule_based(text):
     elif r["device_type"] and r["action"]:                  r["confidence"] = 0.78
     elif r["device_type"] or r["action"]:                   r["confidence"] = 0.55
     return r, 5
-
+# it will try GPT first but can switch to rule-based parsing if it fails
 def parse_command(text):
     parsed, latency = parse_with_llm(text)
     if parsed:
@@ -220,7 +220,7 @@ SCENES = {
     "away mode":    [("light","turn_off"),("door","lock"),  ("fan","turn_off"),("ac","turn_off")],
     "security mode":[("camera","turn_on"),("door","lock")],
 }
-
+#This will execute the parsed command
 def execute(parsed):
     affected = []
     intent   = parsed.get("intent")
@@ -277,7 +277,7 @@ def execute(parsed):
                 affected.append(f"{d['name']}: {d['status']}")
 
     return affected
-
+# This is for generating human-like responses in the chatbot
 def generate_response(parsed, affected):
     intent = parsed.get("intent")
     action = parsed.get("action", "")
@@ -302,7 +302,7 @@ def generate_response(parsed, affected):
     return f"{count}{loc} {verb}."
 
 # API ROUTES
-
+# Flask endpoints which are used by the dashboard
 @app.route("/api/health")
 def health():
     return jsonify({"status":"ok","version":"2.0.0","project":"SmartHomeAI",
@@ -332,7 +332,7 @@ def get_rooms():
         r_copy["devices"] = [d for d in DEVICES.values() if d["room"] == r["name"]]
         result.append(r_copy)
     return jsonify(result)
-
+# This receives natural language commands from dashboard, parses them, and then returns a response
 @app.route("/api/nlp/command", methods=["POST"])
 def nlp_command():
     body = request.get_json() or {}
@@ -403,7 +403,7 @@ def trigger_rule(rule_id):
             r["last_triggered"] = datetime.now().isoformat()
             return jsonify({"success": True, "rule": r["name"]})
     return jsonify({"error":"Rule not found"}), 404
-
+# This is for displaying the dashboard analytics
 @app.route("/api/analytics/summary")
 def analytics_summary():
     active   = sum(1 for d in DEVICES.values() if d["status"] in ("on","unlocked"))
@@ -447,7 +447,7 @@ def nlp_metrics():
 def mqtt_log():
     return jsonify(list(reversed(MQTT_LOG[-20:])))
 
-# Run
+# This is for running the app, it starts the Flask development server and prints backend startup information.
 if __name__ == "__main__":
     mode = "GPT-3.5" if OPENAI_API_KEY else "rule-based fallback"
     print(f"""     
