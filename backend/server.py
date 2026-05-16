@@ -427,20 +427,33 @@ def daily_commands():
 
 @app.route("/api/analytics/nlp/metrics")
 def nlp_metrics():
-    total   = len(COMMAND_LOG)
-    success = sum(1 for c in COMMAND_LOG if c.get("affected_devices"))
-    avg_lat = (sum(c.get("latency_ms",280) for c in COMMAND_LOG) // total) if total else 280
+    total = len(COMMAND_LOG)
+
+    success = sum(
+        1 for c in COMMAND_LOG
+        if c.get("affected_devices")
+        or c.get("parsed_intent", {}).get("intent") == "query_status"
+    )
+
+    avg_lat = (
+        sum(c.get("latency_ms", 280) for c in COMMAND_LOG) // total
+        if total else 280
+    )
+
     intents = {}
     for c in COMMAND_LOG:
-        i = c.get("parsed_intent",{}).get("intent","unknown")
-        intents[i] = intents.get(i, 0) + 1
+        intent = c.get("parsed_intent", {}).get("intent", "unknown")
+        intents[intent] = intents.get(intent, 0) + 1
+
+    success_rate = round(success / total * 100, 1) if total else 0
+
     return jsonify({
         "total_commands": total,
-        "success_rate":   round(success/total*100, 1) if total else 95.0,
+        "success_rate": success_rate,
         "avg_latency_ms": avg_lat,
-        "intents":        [{"intent":k,"count":v} for k,v in intents.items()],
-        "accuracy":       92 if OPENAI_API_KEY else 78,
-        "mode":           "gpt-3.5" if OPENAI_API_KEY else "rule-based",
+        "intents": [{"intent": k, "count": v} for k, v in intents.items()],
+        "accuracy": success_rate,
+        "mode": "gpt-3.5" if OPENAI_API_KEY else "rule-based",
     })
 
 @app.route("/api/mqtt/log")
