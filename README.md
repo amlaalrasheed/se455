@@ -10,33 +10,23 @@
 cd backend
 python -m venv venv
 venv\Scripts\activate          # Windows
-pip install -r requirements.txt
+pip install -r requirements.txt  #This is for downloading the required packages
 python server.py               # → http://localhost:5000
 ```
 
 ### Frontend
 ```bash
 cd frontend
-npm install
+npm install           #This is for installing all required packages for React App
 npm run dev                    # → http://localhost:5173
 ```
 
 ### Optional — Enable GPT-3.5
-Create `backend/.env`:
+Create `backend/.env`:        #File should be created in backend to add the openai api key
 ```
 OPENAI_API_KEY=sk-your-key-here
 ```
 
-## What's Simplified vs Full Version
-| | Simplified | Full |
-|---|---|---|
-| Backend files | 1 file | 15+ files |
-| Packages | 3 | 14 |
-| Database | None (memory) | SQLite + ORM |
-| Auth | None | JWT + bcrypt |
-| UI | Same | Same |
-| LLM | Same | Same |
-| MQTT | Same | Same |
 
 ## Project Structure
 ```
