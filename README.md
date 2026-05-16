@@ -3,7 +3,7 @@
 ---
 **Team:** Layan Alshowaier - Almaha Alrasheed - Lateen Alhurasen - Moudi Alsadoon - Saba Siddiqui
 
-## Quick Start
+## Where to Start
 
 ### Backend (1 file, 3 packages)
 ```bash
