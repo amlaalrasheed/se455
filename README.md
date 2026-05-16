@@ -5,7 +5,7 @@
 
 ## Where to Start
 
-### Backend (1 file, 3 packages)
+### Backend 
 ```bash
 cd backend
 python -m venv venv
@@ -22,9 +22,9 @@ npm run dev                    # → http://localhost:5173
 ```
 
 ### Enable GPT-3.5
-Create `backend/.env`:        #File should be created in backend to add the openai api key
+Create `backend/.env`:       
 ```
-OPENAI_API_KEY=sk-your-key-here
+OPENAI_API_KEY=sk-your-key-here    #File should be created in backend to add the openai api key
 ```
 
 
