@@ -480,23 +480,6 @@ export default function App() {
                   )
                 })}
               </div>
-
-              {/* System comparison */}
-              <div style={S.card}>
-                <div style={{ fontSize:13, fontWeight:600, color:"#0f172a", marginBottom:14 }}>vs State-of-the-Art Systems</div>
-                {[
-                  ["SmartHomeAI (Ours)", `${nlpMetrics.accuracy||92}%`, "#0ea5e9", true],
-                  ["SAGE [9]",           "91%", "#94a3b8", false],
-                  ["SASHA [12]",         "89%", "#94a3b8", false],
-                  ["Vega [11]",          "89%", "#94a3b8", false],
-                  ["Traditional VA",     "65%", "#94a3b8", false],
-                ].map(([name, acc, color, highlight]) => (
-                  <div key={name} style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8, padding: highlight ? "6px 8px" : "4px 0", borderRadius: highlight ? 6 : 0, background: highlight ? "rgba(14,165,233,0.05)" : "transparent", border: highlight ? "0.5px solid rgba(14,165,233,0.2)" : "none" }}>
-                    <span style={{ fontSize:12, color: highlight ? "#0f172a" : "#64748b", flex:1, fontWeight: highlight ? 600 : 400 }}>{name}</span>
-                    <span style={{ fontSize:13, fontFamily:"monospace", fontWeight:700, color }}>{acc}</span>
-                  </div>
-                ))}
-              </div>
             </div>
           </div>
         )}
